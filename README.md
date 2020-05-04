@@ -12,6 +12,8 @@ No static IP? No problem. Step by step, we will set up a VPN, a web server and H
 - RPi.GPIO Python library
 - jQuery (get a link to the jQuery CDN)
 
+*I'm going through the installation of most of the software.*
+
 ## Assembling the circuit
 ![Circuit](img/circuit.png "Circuit")
 
