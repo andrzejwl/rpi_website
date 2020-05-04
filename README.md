@@ -45,6 +45,7 @@ If so, let's create a network and add our devices.
 
     A successfully configured network should be similar to this:
     ![Network](img/network.png "Husarnet private network")
+    
     You can now test if your network works by pinging the devices. 
     For example, on my *laptop* device I would run:
     ```bash
