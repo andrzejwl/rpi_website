@@ -382,3 +382,5 @@ Now you can open the website on your computer - open a web browser and go to *ht
 There we go!  
 
 ![Website](img/website.png "Website")
+
+![Website 2](img/website_2.png "Website after threshold exceeded")
