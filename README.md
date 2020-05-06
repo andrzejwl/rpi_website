@@ -69,38 +69,39 @@ import time
 GPIO.setmode(GPIO.BCM)
 
 TRIG = 23
-ECHO = 24
+ECHO =24
 
 GPIO.setup(TRIG, GPIO.OUT)
 GPIO.setup(ECHO, GPIO.IN)
 
-file = '/var/www/html/data.txt' # we will save the distance to a text file
+file = '/var/www/html/data.txt'
 
 try:
 
-    while True:
-        GPIO.output(TRIG,False)
-        time.sleep(2)
-        GPIO.output(TRIG, True)
-        time.sleep(0.00001)
-        GPIO.output(TRIG, False)
-    
-        while GPIO.input(ECHO) == 0:
-            pulse_start = time.time()
+	while True:
+		GPIO.output(TRIG,False)
+		time.sleep(0.01)
+		GPIO.output(TRIG, True)
+		time.sleep(0.0001)
+		GPIO.output(TRIG, False)
+	
+		while GPIO.input(ECHO) == 0:
+			pulse_start = time.time()
 
-        while GPIO.input(ECHO) == 1:
-            pulse_end = time.time()
+		while GPIO.input(ECHO) == 1:
+			pulse_end = time.time()
 
-        pulse_duration = pulse_end - pulse_start
-        dist = pulse_duration * 17150
-        dist = round(dist, 2)
-        print("distance:", dist) # we don't need to print anything, just for convenience
-        with open(file, 'w') as f:
-            f.write(str(dist))
+		pulse_duration = pulse_end - pulse_start
+		dist = pulse_duration * 17150
+		dist = round(dist, 2)
+		
+		print("distance:", dist, end='\r', flush=True)
+		with open(file,'w') as f:
+			f.write(str(dist))
 
 except KeyboardInterrupt:
-    print("cleanup")
-    GPIO.cleanup()
+	print("cleanup")
+	GPIO.cleanup()
 ```
 
 As you can see, we are simply saving the calculated distance inside of a .txt file located in Apache directory. This was by far the easiest way I could think of to access sensor data without having to write fancy backend services. 
@@ -122,13 +123,14 @@ should result in getting the default Apache index.html page.
 ## Website
 Now that we have a working interface to acquire data from, we can proceed to presenting it to a user. For that we will need jQuery and some basic CSS/JS. 
 
+### Retrieving sensor data
 Let’s start by dynamically pulling data from the text file. Let’s say we will refresh the data once a second. 
 ```html
 <script>
         var hostname = document.location.origin;
-        var interval = 1000;
+        var interval = 50; // you can adjust it depending on what refresh rate is sufficient for you
 
-        function getData() {
+        function get_data() {
             $.ajax({
                 url: hostname+"/data.txt",
                 type: "GET",
@@ -140,18 +142,20 @@ Let’s start by dynamically pulling data from the text file. Let’s say we wil
                     bar.set_value(data);
 
                     setTimeout(function(){
-                        getData();
+                        get_data();
                     }, interval);
                 }
             });
         }
 
-        getData();
+        get_data();
 </script>
 ```
 
 We are using AJAX, which is a component of the jQuery library used for dynamic requests and refreshing data without having to reload the page. For now, don’t worry about the three lines starting from geElementById, we’ll get to that later. 
-Our function getData simply makes a request to /data.txt, which is the directory with our sensor data. The setTimeout construct sets an interval defined earlier (1000ms), after which the entire function logic is repeated. 
+Our function get_data simply makes a request to ```/data.txt```, which is the directory with our sensor data. The ```setTimeout``` construct sets an interval defined earlier (50ms), after which the entire function logic is repeated. 
+
+### Displaying the data
 
 Let’s now draw a progress bar. We will start by defining 3 divs.
 ```html
@@ -161,7 +165,7 @@ Let’s now draw a progress bar. We will start by defining 3 divs.
 </div>
 ```
 
-We will quickly style it, so that the data is nicely presented to the user.
+We will quickly style it, so that the data is nicely presented to the user (css is moved to external files at the end). 
 ```html
 <style>
     .progress-bar{
@@ -233,11 +237,142 @@ bar = new ProgressBar(document.querySelector('.progress-bar'), 200);
 ```
 
 The constructor of this class takes the styled element (*progress-bar-fill* div) and initial progress bar value as arguments. Initial value doesn’t really matter as it will immediately get changed by our code. 
-If you look closely, you will notice I have initialized an instance of the ProgressBar class (*bar*). This is the same variable that occurs in one of previous snippets (inside the *getData* function). 
+If you look closely, you will notice I have initialized an instance of the ProgressBar class (*bar*). This is the same variable that occurs in one of previous snippets (inside the *get_data* function). 
 Our class has two methods. The first one is set_value which scales the distance in cm to % (0-100). I chose to scale the values to 400cm being 100% but in theory you could go all the way up to 4000cm as this is the maximum range of HC-SR04.  The second method is update. This sets the actual width of our div.
 
+### Distance limit
+
+Let's now enhance our website by adding a few dynamic features - a notification in the browser tab and an adjustable threshold that will determine whether we are far enough from the sensor.
+To start with, we should add a couple divs to the document (right beneath *progress-bar*):
+```html
+    <div style="margin-top: 200px; width: 100%; text-align: center">
+    <p id="info"> Threshold slider </p>
+	</div>
+    <div class="slidecontainer" style="margin-top: 50px;">
+  		<input type="range" min="1" max="100" value="50" class="slider" id="myRange">
+	</div>
+	<div id="slider-value"></div>
+```
+
+I have also styled the divs so that they look better on the website.
+
+
+To avoid messy code, we should split the files. Create a directory called *style* and inside of that directory create a file slider.css. Here is the code for slider.css:
+```css
+.slidecontainer {
+  	width: 100%; 
+}
+
+.slider {
+	-webkit-appearance: none; 
+	appearance: none;
+	width: 100%;
+	height: 25px; 
+	background: #d3d3d3; 
+	outline: none; 
+	opacity: 0.7; 
+	-webkit-transition: .2s; 
+	transition: opacity .2s;
+}
+
+.slider:hover {
+	opacity: 1; 
+}
+
+
+.slider::-webkit-slider-thumb {
+	-webkit-appearance: none; 
+	appearance: none;
+	width: 25px; 
+	height: 25px; 
+	background: #4CAF50; 
+	cursor: pointer;
+}
+
+.slider::-moz-range-thumb {
+	width: 25px; 
+	height: 25px;
+	background: #4CAF50;
+	cursor: pointer;
+}
+```
+
+To make the slider work, we need to add some Javascript for dynamic updates.
+```js
+    var slider = document.getElementById("myRange");
+    var output = document.getElementById("slider-value");
+    // Display the default slider value
+    output.innerHTML = "Current threshold value: " + slider.value*4 + "cm"; 
+
+    // Update the current value
+    slider.oninput = function() {
+        output.innerHTML = "Current threshold value: " + this.value*4 + "cm";
+    } 
+```
+
+I have added this code right under the initialization of *bar* (**reminder**: *full code available in source files on the repository*).
+
+OK, one more thing left to do - browser tab notifications. At the top of the browser, in our website tab we will want to have something like: *favicon:(distance) Page title*.
+To achieve the effect of a dynamic favicon, we need to write a Javascript function:
+```js
+function set_favicon(happy) {
+    icon = 'img/happy.ico';
+    
+    if (!happy){
+        icon = 'img/angry.ico';	
+    }
+
+    var link = document.createElement('link');
+    var old_link = document.getElementById('favicon');
+
+    link.id = 'favicon';
+    link.rel = 'icon'; 
+    link.href = icon;
+
+    if (old_link){
+        document.head.removeChild(old_link);
+    }
+
+    document.head.appendChild(link);
+}
+```
+
+We will have two possible favicons - angry and happy(determined by the *happy* parameter).
+You can download the icons from my repository. As you can see, I have created a new directory in ```/var/www/html``` called img, where I store the icons. The code is quite simple - we determine which icon to use, we create a *link* element, check if one already exists and replace it with a new one.
+We now need to go back to our good old friend ```get_data``` and make some adjustments:
+```js
+function get_data() {
+    $.ajax({
+        url: hostname+"/data.txt",
+            type: "GET",
+            dataType : "text",
+            success: function(data){
+                
+                d = document.getElementById('sensor-data');
+                d.innerHTML = data;
+                bar.set_value(data);
+
+                //changes start here
+                if (slider.value*4 > data){
+                    document.getElementById('info').innerHTML = "Move away";
+                    set_favicon(false);
+                } else{
+                    document.getElementById('info').innerHTML = "OK";
+                    set_favicon(true);
+                }
+
+                setTimeout(function(){
+                    get_data();
+                }, interval);
+            }
+    });
+}
+```
+The if statement determines whether the threshold value has been exceeded or not and depending on that we are either notified (by an angry emoji and a subtle hint to stay back) that we are too close or informed that our distance is appropriate. 
+The slider value is multiplied by 4 because the slider is designed to have values from 0-100 (kind of like the progress bar) and as mentioned earlier, I have settled for 400cm being the maximum range.
+
 And that’s it!
-We can now test our website. All the HTML/JS snippets put together into one file are available on the repository (*get.html* file, remember to copy it to /var/www/html directory). 
+We can now test our website. Once again, all the HTML/JS snippets put together into one file are available on the repository (```get.html``` file, remember to copy it to ```/var/www/html directory```). 
 
 On your RPi, run the python script reading sensor data. In the directory where your script is located run:
 ```bash
