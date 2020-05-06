@@ -355,9 +355,11 @@ function get_data() {
                 //changes start here
                 if (slider.value*4 > data){
                     document.getElementById('info').innerHTML = "Move away";
+                    document.getElementById('bar-fill').style.backgroundColor = "red";
                     set_favicon(false);
                 } else{
                     document.getElementById('info').innerHTML = "OK";
+                    document.getElementById('bar-fill').style.backgroundColor = "#4CAF50";
                     set_favicon(true);
                 }
 
@@ -370,6 +372,7 @@ function get_data() {
 ```
 The if statement determines whether the threshold value has been exceeded or not and depending on that we are either notified (by an angry emoji and a subtle hint to stay back) that we are too close or informed that our distance is appropriate. 
 The slider value is multiplied by 4 because the slider is designed to have values from 0-100 (kind of like the progress bar) and as mentioned earlier, I have settled for 400cm being the maximum range.
+One final touch: this is optional but it looks cool - let's make the progress bar change color when the threshold value is exceeded. This is just two lines of code (snippet above).
 
 And that’s it!
 We can now test our website. Once again, all the HTML/JS snippets put together into one file are available on the repository (```get.html``` file, remember to copy it to ```/var/www/html directory```). 

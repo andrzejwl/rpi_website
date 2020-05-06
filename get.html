@@ -35,7 +35,7 @@
 
   	<div class="progress-bar">
   		<div class="result" id ="sensor-data"></div>
-  		<div class = "progress-bar-fill"></div>
+  		<div class = "progress-bar-fill" id = "bar-fill"></div>
     </div>
 
     <div style = "margin-top: 200px; width: 100%; text-align: center">
@@ -104,9 +104,11 @@
 
 				        if (slider.value*4 > data){
 				        	document.getElementById('info').innerHTML = "Move away";
+							document.getElementById('bar-fill').style.backgroundColor = "red";
 				        	set_favicon(false);
 				        } else{
 				        	document.getElementById('info').innerHTML = "OK";
+							document.getElementById('bar-fill').style.backgroundColor = "#4CAF50";
 				        	set_favicon(true);
 				        }
 
