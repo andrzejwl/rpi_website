@@ -2,6 +2,12 @@
 
 No static IP? No problem. Step by step, we will set up a VPN, a web server and HC-SR04 ultrasound distance sensor on Raspberry Pi.
 
+![](img/main.jpg)
+
+
+## Final effect demo (click to go to YouTube)
+[![](http://img.youtube.com/vi/3ZJRz9Zzo8g/0.jpg)](http://www.youtube.com/watch?v=3ZJRz9Zzo8g "")
+
 ## Required hard- and software
 - Raspberry Pi with Raspbian
 - HC-SR04 ultrasonic distance sensor
@@ -80,7 +86,7 @@ try:
 
 	while True:
 		GPIO.output(TRIG,False)
-		time.sleep(0.01)
+		time.sleep(0.1)
 		GPIO.output(TRIG, True)
 		time.sleep(0.0001)
 		GPIO.output(TRIG, False)
@@ -103,7 +109,7 @@ except KeyboardInterrupt:
 	print("cleanup")
 	GPIO.cleanup()
 ```
-
+I would highly recommend you play around with the duration of first ```time.sleep``` so that your refresh rate is decent and you're not getting to many errors. For me a refresh rate of ~10Hz works perfectly fine.
 As you can see, we are simply saving the calculated distance inside of a .txt file located in Apache directory. This was by far the easiest way I could think of to access sensor data without having to write fancy backend services. 
 To install and enable Apache on Raspberry Pi do the following:
 ```bash
@@ -128,7 +134,7 @@ Let’s start by dynamically pulling data from the text file. Let’s say we wil
 ```html
 <script>
         var hostname = document.location.origin;
-        var interval = 50; // you can adjust it depending on what refresh rate is sufficient for you
+        var interval = 100; // it's reasonable to set this to the same value as the refresh rate of the sensor
 
         function get_data() {
             $.ajax({
@@ -153,7 +159,7 @@ Let’s start by dynamically pulling data from the text file. Let’s say we wil
 ```
 
 We are using AJAX, which is a component of the jQuery library used for dynamic requests and refreshing data without having to reload the page. For now, don’t worry about the three lines starting from geElementById, we’ll get to that later. 
-Our function get_data simply makes a request to ```/data.txt```, which is the directory with our sensor data. The ```setTimeout``` construct sets an interval defined earlier (50ms), after which the entire function logic is repeated. 
+Our function get_data simply makes a request to ```/data.txt```, which is the directory with our sensor data. The ```setTimeout``` construct sets an interval defined earlier (100ms), after which the entire function logic is repeated. 
 
 ### Displaying the data
 
