@@ -1,6 +1,6 @@
 # Using Raspberry Pi as a web server with no static IP address.
 
-No static IP? No problem. Step by step, we will set up a VPN, a web server and HC-SR04 ultrasound distance sensor on Raspberry Pi.
+No static IP? No problem. Step by step, we will set up a VPN, a web server and HC-SR04 ultrasound distance sensor on Raspberry Pi and make it available over the internet.
 
 ![](img/main.jpg)
 
